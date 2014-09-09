@@ -1,102 +1,69 @@
-package relax
+package gorelax
 
 import (
 	"fmt"
 	"net/http"
-	"regexp"
-	"strings"
 )
 
-var look_for = []string{"{", "}", "<number>", "<string>"}
-var replace_with = []string{"(?P<", ">", "[0-9\\.]+)", "[0-9a-zA-Z_]+)"}
-
-func compileActualUrl(actualUrl string) (*regexp.Regexp, string) {
-	for index, _ := range look_for {
-		actualUrl = strings.Replace(actualUrl, look_for[index], replace_with[index], -1)
-	}
-	actualUrl = "^" + actualUrl + "$"
-	r, _ := regexp.Compile(actualUrl)
-
-	return r, actualUrl
+//RelaxCompiledPather Comment TODO
+type RelaxCompiledPather interface {
+	Match(url string) (map[string]string, bool)
 }
 
-func applyPath(target string, source *regexp.Regexp) map[string]string {
-	result := make(map[string]string)
-	if source.MatchString(target) {
-		keys := source.SubexpNames()
-		values := source.FindStringSubmatch(target)
-
-		for index, value := range keys {
-			if index != 0 {
-				result[value] = values[index]
-			}
-		}
-	}
-	return result
+//RelaxRequester Comment TODO
+type RelaxRequester interface {
+	Method() string
+	Param(key string) string
+	Query(key string) string
+	Header(key string) string
 }
 
-type RelaxHttpRequest struct {
-	Params  map[string]string
-	request *http.Request
+//RelaxResponser Comment TODO
+type RelaxResponser interface {
+	Send(body string, code int)
 }
 
-type RelaxHttpResponse struct {
-	responseWriter http.ResponseWriter
-}
-
-func (self RelaxHttpResponse) Send(body string, code int) {
-	self.responseWriter.WriteHeader(code)
-	fmt.Fprintf(self.responseWriter, body)
-}
-
-type RelaxHttpFuncHandler func(req RelaxHttpRequest, res RelaxHttpResponse)
+//RelaxFuncHandler Comment TODO
+type RelaxFuncHandler func(req RelaxRequester, res RelaxResponser)
 
 type controller struct {
-	compiledPath *regexp.Regexp
-	method       string
-	httpHandler  RelaxHttpFuncHandler
+	compiledPath RelaxCompiledPather
+	handler      RelaxFuncHandler
 }
 
-var controllers = make(map[string]*controller)
+//Relax Comment TODO
+type Relax struct {
+	controllers map[string]controller
+}
 
-type Relax struct{}
+func (r *Relax) mainHandler(w http.ResponseWriter, req *http.Request) {
+	relaxResponse := NewRelaxResponse(&w)
 
-func (self Relax) mainHandler(w http.ResponseWriter, r *http.Request) {
-	url := r.URL
+	path := req.Method + req.URL.Path
 
-	method := r.Method
-
-	var targetController *controller = nil
-
-	for _, value := range controllers {
-		if value.compiledPath.MatchString(url.Path) {
-			if value.method == method {
-				targetController = value
-				break
-			}
+	for _, controller := range r.controllers {
+		if params, ok := controller.compiledPath.Match(path); ok {
+			controller.handler(NewRelaxRequest(&params, req), relaxResponse)
+			return
 		}
 	}
 
-	if targetController != nil {
-		params := applyPath(url.Path, targetController.compiledPath)
-		targetController.httpHandler(RelaxHttpRequest{params, r}, RelaxHttpResponse{w})
-	} else {
-		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "Not Found")
-	}
+	relaxResponse.Send("Not Found", http.StatusNotFound)
 }
 
-func (self Relax) RegisterHandler(method string, path string, httpFuncHandler RelaxHttpFuncHandler) bool {
-	regexpPath, actualPath := compileActualUrl(path)
-	if value, ok := controllers["foo"]; ok && value.method == method {
-		return false
-	} else {
-		controllers[actualPath] = &controller{regexpPath, method, httpFuncHandler}
-		return true
-	}
+//RegisterHandler Comment TODO
+func (r *Relax) RegisterHandler(method string, url string, funcHandler RelaxFuncHandler) {
+	path := method + url
+	r.controllers[path] = controller{NewRelaxCompiledPath(path), funcHandler}
 }
 
-func (self Relax) Listen(port int) {
-	http.HandleFunc("/", self.mainHandler)
-	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+//Listen Comment TODO
+func (r *Relax) Listen(host string, port int) {
+	http.HandleFunc("/", r.mainHandler)
+	http.ListenAndServe(fmt.Sprintf("%s:%d", host, port), nil)
+}
+
+//NewRelax Comment TODO
+func NewRelax() *Relax {
+	return &Relax{make(map[string]controller)}
 }
