@@ -5,6 +5,15 @@ import (
 	"net/url"
 )
 
+//RelaxRequester Comment TODO
+type RelaxRequester interface {
+	Method() string
+	Param(key string) string
+	Query(key string) string
+	Header(key string) string
+	Cookie(key string) string
+}
+
 //RelaxRequest Comment TODO
 type RelaxRequest struct {
 	params  *map[string]string
@@ -34,6 +43,15 @@ func (rr *RelaxRequest) Query(key string) string {
 //Header Comment TODO
 func (rr *RelaxRequest) Header(key string) string {
 	return rr.req.Header.Get(key)
+}
+
+//Cookie Comment TODO
+func (rr *RelaxRequest) Cookie(key string) string {
+	cookie, err := rr.req.Cookie(key)
+	if err == nil {
+		return cookie.Value
+	}
+	return ""
 }
 
 //NewRelaxRequest Comment TODO

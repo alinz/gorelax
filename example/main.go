@@ -6,14 +6,11 @@ import (
 )
 
 func main() {
-	var relaxServer relax.Relax = relax.Relax{}
-
-	relaxServer.RegisterHandler("GET", "/user/{id}<number>", func(req relax.RelaxHttpRequest, res relax.RelaxHttpResponse) {
-		res.Send(fmt.Sprintf("You have Selected user %s", req.Params["id"]), 200)
-	})
-
-	relaxServer.RegisterHandler("GET", "/users", func(req relax.RelaxHttpRequest, res relax.RelaxHttpResponse) {
-		res.Send("[]", 200)
+	relax := gorelax.NewRelax()
+	relax.RegisterHandler("GET", "/user/{id}", func(req gorelax.RelaxRequester, res gorelax.RelaxResponser) {
+		res.EnableCORS()
+		res.Cookie("user", "hello", "", "", -1, "")
+		res.Send(fmt.Sprintf("your cookie is %s", req.Cookie("user")), 200)
 	})
 
 	relaxServer.Listen(9000)

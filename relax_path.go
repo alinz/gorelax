@@ -10,6 +10,11 @@ var (
 	replaceWith = []string{"(?P<", ">[0-9a-zA-Z_]+)"}
 )
 
+//RelaxCompiledPather Comment TODO
+type RelaxCompiledPather interface {
+	Match(url string) (map[string]string, bool)
+}
+
 func compiledURL(path string) *regexp.Regexp {
 	for index := range lookFor {
 		path = strings.Replace(path, lookFor[index], replaceWith[index], -1)
@@ -27,7 +32,6 @@ type RelaxCompiledPath struct {
 
 //Match Comment TODO
 func (rcp *RelaxCompiledPath) Match(path string) (map[string]string, bool) {
-
 	var params map[string]string
 	result := false
 
