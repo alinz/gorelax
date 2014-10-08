@@ -32,6 +32,7 @@ func (rr *RelaxResponse) Send(body string, code int) {
 func (rr *RelaxResponse) SendAsJSON(message interface{}, code int) {
 	result, _ := json.Marshal(message)
 	temp := string(result)
+	rr.Header("content-type", "application/json; charset=utf-8")
 	rr.Send(temp, code)
 }
 
