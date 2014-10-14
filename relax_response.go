@@ -3,6 +3,7 @@ package gorelax
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 )
 
@@ -12,6 +13,7 @@ type RelaxResponser interface {
 	Header(key string, value string)
 	Send(body string, code int)
 	SendAsJSON(message interface{}, code int)
+	SendAsBinary(body io.Reader, length int64, contentType string)
 	Cookie(key string, value string, domain string, path string, age int, secureKey string)
 }
 
@@ -34,6 +36,13 @@ func (rr *RelaxResponse) SendAsJSON(message interface{}, code int) {
 	temp := string(result)
 	rr.Header("content-type", "application/json; charset=utf-8")
 	rr.Send(temp, code)
+}
+
+//SendAsBinary Comment TODO
+func (rr *RelaxResponse) SendAsBinary(body io.Reader, length int64, contentType string) {
+	rr.Header("Content-Length", fmt.Sprint(length))
+	rr.Header("Content-Type", contentType)
+	io.Copy(*rr.responseWriter, body)
 }
 
 //Header Comment TODO

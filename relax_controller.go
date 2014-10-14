@@ -1,8 +1,9 @@
 package gorelax
 
 import (
-	"github.com/alinz/gorelax/util"
 	"net/http"
+
+	"github.com/alinz/gorelax/util"
 )
 
 //RelaxFuncHandler Comment TODO
