@@ -14,6 +14,7 @@ type RelaxResponser interface {
 	Send(body string, code int)
 	SendAsJSON(message interface{}, code int)
 	SendAsBinary(body io.Reader, length int64, contentType string)
+	Write(content []byte)
 	Cookie(key string, value string, domain string, path string, age int, secureKey string)
 }
 
@@ -43,6 +44,10 @@ func (rr *RelaxResponse) SendAsBinary(body io.Reader, length int64, contentType 
 	rr.Header("Content-Length", fmt.Sprint(length))
 	rr.Header("Content-Type", contentType)
 	io.Copy(*rr.responseWriter, body)
+}
+
+func (rr *RelaxResponse) Write(content []byte) {
+	(*rr.responseWriter).Write(content)
 }
 
 //Header Comment TODO
